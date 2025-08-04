@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CSBAQ+ Personality Test</title>
+  <style>
+    body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input[type="number"] { width: 50px; }
+    .question { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>CSBAQ+ Personality Assessment</h1>
+  <form id="csbaq-form">
+    <div id="questions"></div>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="results" style="margin-top: 20px;"></div>
+
+  <script>
+    const form = document.getElementById("csbaq-form");
+    const questionsDiv = document.getElementById("questions");
+
+    // Generate 43 question inputs
+    for (let i = 1; i <= 43; i++) {
+      questionsDiv.innerHTML += `
+        <div class="question">
+          <label for="q${i}">Q${i} (1 to 7):</label>
+          <input type="number" id="q${i}" name="q${i}" min="1" max="7" required>
+        </div>
+      `;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const responses = {};
+      for (let i = 1; i <= 43; i++) {
+        const val = parseInt(document.getElementById("q" + i).value);
+        responses[i] = val;
+      }
+
+      const res = await fetch("https://csbaq-backend.onrender.com/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ responses })
+      });
+
+      const result = await res.json();
+      document.getElementById("results").innerHTML = `
+        <h2>Results</h2>
+        <p><strong>Archetype:</strong> ${result.Archetype}</p>
+        <p><strong>Dominant Strategic Domain:</strong> ${result["Dominant Domain"]}</p>
+        <h3>Big Five Trait Scores</h3>
+        <ul>
+          ${Object.entries(result["Trait Scores"]).map(([k, v]) => `<li>${k}: ${v}</li>`).join('')}
+        </ul>
+        <h3>Strategic Domain Scores</h3>
+        <ul>
+          ${Object.entries(result["Strategic Domain Scores"]).map(([k, v]) => `<li>${k}: ${v}</li>`).join('')}
+        </ul>
+      `;
+    });
+  </script>
+</body>
+</html>
